@@ -11,7 +11,7 @@ mpiexec --version
 
 #Compilar
 ```
-mpicxx main.cpp ejemplo01
+mpicxx main.cpp -o ejemplo01
 ```
 
 #Ejecutar
@@ -19,7 +19,7 @@ mpicxx main.cpp ejemplo01
 mpiexec -n 4 ./ejemplo01
 ```
 
-##Instalacion OMP en ubuntu 
+##Instalacion OMP 
 ```
 sudo apt-get update 
 sudo apt-get install libopenmpi-dev

@@ -7,8 +7,7 @@ int main(int argc, char ** argv){
     int rank; 
     int size; 
     int n=4;
-    int A[n][n];  //vector de 40 columnas 3 filas
-    int B[n][n];
+   
 
     srand(time(NULL));
 
@@ -20,7 +19,9 @@ int main(int argc, char ** argv){
     int div = n / size;
 
     if(rank==0){
-        
+
+        int A[n][n];  //vector de 40 columnas 3 filas
+        int B[n][n];
         for(int i=0; i<n; i++){
             for(int j=0; j<n; j++){
                 A[i][j]= rand() % 5+1; //randoms del 1 al 10
@@ -51,31 +52,66 @@ int main(int argc, char ** argv){
             aux=aux+div;
         }
 
-         for(int i=1; i<size; i++){
+        printf("RESULTADO\n");
+        for(int i=1; i<size; i++){
             int C[div][n];
-           // MPI_Recv(C,div*n,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            
+            MPI_Recv(C,div*n,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-            /*for(int j=0;j< cont;j++){
-                printf("respuesta : %d\n", A[j]);
-            }*/
+            for(int j=0; j<div; j++){
+                for(int k=0; k<n; k++){
+                    printf("%d  ", C[j][k]);
+                }
+                printf("\n");
+            }
+        }
+
+        int Apart[div][n];
+        int C[div][n];
+
+        for(int i=aux; i<n; i++){
+            for(int j=0; j<n; j++){
+                C[i][j]=0;
+                for (int k=0;k<n;k++){
+                    C[i][j]=C[i][j]+Apart[i][k]*B[k][j];
+                    //printf("%d  ", C[i][j]);
+                } 
+            }
+        }
+          
+        for(int i=3; i<n; i++){
+            for(int j=0; j<n; j++){
+                printf("%d  ", C[i][j]);
+            }
+            printf("\n");
         }
 
     }else{
-        MPI_Recv(A,div*n,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(B,n*n,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("rank %d , %d , %d\n", rank, A[0][0],A[div-1][0]);
-        printf("rank %d , %d , %d\n", rank, B[0][0],B[n][n]);
-
+        int Apart[div][n];
+        int B[n][n];
         int C[div][n];
+
+        MPI_Recv(Apart,div*n,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Recv(B,n*n,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        //printf("rank %d , %d , %d\n", rank, Apart[0][0],Apart[div-1][0]);
+        //printf("rank %d\n", rank);
+    
         for(int i=0; i<div; i++){
             for(int j=0; j<n; j++){
                 C[i][j]=0;
                 for (int k=0;k<n;k++){
-                    C[i][j]=C[i][j]+A[i][k]*B[k][j];
+                    C[i][j]=C[i][j]+Apart[i][k]*B[k][j];
                 } 
             }
         }
-       // MPI_Send(&C,div*n,MPI_INT,0,0,MPI_COMM_WORLD);
+    
+        /*for(int i=0; i<div; i++){
+            for(int j=0; j<n; j++){
+                printf("%d  ", C[i][j]);
+            }
+            printf("\n");
+        }*/
+        MPI_Send(&C,div*n,MPI_INT,0,0,MPI_COMM_WORLD);
     }
 
     MPI_Finalize(); 
