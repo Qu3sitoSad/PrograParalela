@@ -2,18 +2,28 @@
 #include <mpi.h> 
 #include <random>
 #include <time.h>
+#include <math.h>
 
 int main(int argc, char ** argv){ 
     int rank; 
     int size; 
-    int n=30;
+    int n=10;
     int data[n][3];  //vector de 40 columnas 3 filas
-    int c[3][3];
+    int C[3][3];
+
+
+    int x;
+    int y;
+    int z;
+    int potencia = 2;
+    int elmenor = 999;
+    int aux2;
+    int res;
+      
 
     srand(time(NULL));
 
     MPI_Init(&argc,&argv); 
-
     MPI_Comm_rank(MPI_COMM_WORLD, &rank); 
     MPI_Comm_size(MPI_COMM_WORLD, &size); 
 
@@ -29,22 +39,23 @@ int main(int argc, char ** argv){
 
         for(int i=0; i<3; i++){
             for(int j=0; j<3; j++){
-                c[i][j]= rand() % 10+1; //randoms del 1 al 10
+                C[i][j]= rand() % 10+1; //randoms del 1 al 10
             }
         }
         
         printf("data:\n");
-       for(int i=0; i<n; i++){
+        for(int i=0; i<n; i++){
             for(int j=0; j<3; j++){
                 printf("%d   ", data[i][j]);
             }
             printf("\n");
         }
 
-        printf("c:\n");
+        printf("\n");
+        printf("C:\n");
         for(int i=0; i<3; i++){
             for(int j=0; j<3; j++){
-                printf("%d   ", data[i][j]);
+                printf("%d   ", C[i][j]);
             }
             printf("\n");
         }
@@ -52,100 +63,87 @@ int main(int argc, char ** argv){
         int aux=0;
         for(int i=1; i<size;i++){
             MPI_Send(&data[aux][0],div*3,MPI_INT,i,0,MPI_COMM_WORLD);  
-            MPI_Send(&c, 9, MPI_INT,i,0,MPI_COMM_WORLD);
-            printf("%d\n", data[aux][0]);
-            printf("%d\n", data[aux+div-1][0]);
-            printf("%d , %d \n", aux, div);
+            //MPI_Send(&c, 9, MPI_INT,i,0,MPI_COMM_WORLD);
+            //printf("%d\n", data[aux][0]);
+            //printf("%d\n", data[aux+div-1][0]);
+            //printf("%d , %d \n", aux, div);
             aux=aux+div;
         }
 
-        /*int uv1=0;
-        int uv2=0;
-        int uv3=0;
-        
-        for(int i = aux; i < 40; i++){
+        MPI_Bcast(C, 9, MPI_INT, 0, MPI_COMM_WORLD);
 
-            uv1 = data[i][1]*c[0][2] - data[i][2]*c[0][1];
-            uv2 = data[i][2]*c[0][0] - data[i][0]*c[0][2];
-            uv3 = data[i][0]*c[0][1] - data[i][1]*c[0][0];
-           
-            double a1= (double) data[i][0] / (double) c[0][0];
-            double a2= (double) data[i][1] / (double) c[0][1];
-            double a3= (double) data[i][2] / (double) c[0][2];
-            
-            //printf("%d, %f, %f, %f\n",i,a1,a2,a3);
+        int indices[div];
+        for(int i = aux; i < div; i++){
+            elmenor = 999; // Reiniciar el valor de elmenor en cada iteración
+            for(int j = 0; j < 3; j++){
+                x = pow(data[i][j] - C[0][j], potencia);
+                y = pow(data[i][j] - C[1][j], potencia);
+                z = pow(data[i][j] - C[2][j], potencia);
 
-            if(a1 == a2 & a1 == a3){
-                //printf("valor de c %d, %d, %d\n",c[0][0],c[0][1],c[0][2]);
-                //printf("valor de data %d, %d, %d\n",data[i][0],data[i][1],data[i][2]);
-               
-                //printf("en el rank: %d hay una recta paralela en la posición: %d \n", rank, i+1);
-                printf("respuesta : %d,", i+1);
+                res = sqrt(x + y + z); // Corregir el cálculo de la distancia
+                if(res < elmenor){
+                    elmenor = res;
+                    aux2 = j;
+                }
             }
+            indices[i] = aux2; // Actualizar el valor de indices en cada iteración
         }
 
-        //printf("Indices con rectas paralelas:\n");
+        printf("Resultado: \n");
+        int cont=0;
         for(int i=1; i<size; i++){
-            int cont=0;
-            MPI_Recv(&cont,1,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            int A[cont];
+            int indices[div];
+            MPI_Recv(indices,div,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-            MPI_Recv(A,cont,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+            printf("Rank: %d\n", i);
+            for(int j=0; j<div; j++){
+                printf("(%d %d %d) | %d \n",data[cont][0],data[cont][1],data[cont][2], indices[j]);
+                cont++;
+            }            
+        }
+        printf("Rank: 0\n");
+        for(int j=aux; j<n; j++){
+            printf("(%d %d %d) | %d \n",data[j][0],data[j][1],data[j][2], indices[j]);
+        } 
 
-            for(int j=0;j< cont;j++){
-                printf("respuesta : %d\n", A[j]);
-            }
-        }*/
-    
     }else{
         MPI_Recv(data,div*3,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(c,9,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("rank %d , %d , %d\n", rank, data[0][0],c[0][0]);
-        /*
-        int uv1=0;
-        int uv2=0;
-        int uv3=0;
-        int aux=0;
-        int A[10];
-
-        MPI_Recv(data,div*3,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(&aux,1,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-        int indice=0;
-        int cont=0;
-        for(int i = 0; i < div ; i++){
-
-            uv1 = data[i][1]*c[0][2] - data[i][2]*c[0][1];
-            uv2 = data[i][2]*c[0][0] - data[i][0]*c[0][2];
-            uv3 = data[i][0]*c[0][1] - data[i][1]*c[0][0];
-
-            if(uv1 == 0 & uv2 == 0 & uv3 ==0){
-                //printf(" daya en la rank %d hay una recta paralela en la posición: %d \n",rank, i);
+        MPI_Bcast(C, 9, MPI_INT, 0, MPI_COMM_WORLD);
+        //printf("rank %d , %d , %d\n", rank, data[0][0],data[div-1][0]);
+        
+        /*for(int i=0; i<3; i++){
+            for(int j=0; j<3; j++){
+                printf("%d  ", C[i][j]);
             }
+            printf("\n");
+        }*/
 
-            double a1= (double) data[i][0] / (double) c[0][0];
-            double a2= (double) data[i][1] / (double) c[0][1];
-            double a3= (double) data[i][2] / (double) c[0][2];
-            
-            //printf("%d, %f, %f, %f\n",i,a1,a2,a3);
+        
+        int indices[div];
+        for(int i = 0; i < div; i++){
+            elmenor = 999; // Reiniciar el valor de elmenor en cada iteración
+            for(int j = 0; j < 3; j++){
+                x = pow(data[i][j] - C[0][j], potencia);
+                y = pow(data[i][j] - C[1][j], potencia);
+                z = pow(data[i][j] - C[2][j], potencia);
 
-            //printf("aux.%d\n", aux);
-            
-            if(a1 == a2 & a1 == a3){
-                
-                //printf("valor de data %d, %d, %d\n",data[i][0],data[i][1],data[i][2]);
-                indice= aux+1+i;
-                //printf("en la rank %d hay una recta paralela en la posición: %d \n",rank, indice);
-                A[cont]=indice;
-                cont++;
+                res = sqrt(x + y + z); // Corregir el cálculo de la distancia
+                if(res < elmenor){
+                    elmenor = res;
+                    aux2 = j;
+                }
             }
-        } 
-        MPI_Send(&cont,1,MPI_INT,0,0,MPI_COMM_WORLD);
-        MPI_Send(&A,cont,MPI_INT,0,0,MPI_COMM_WORLD); //primer 0 a donde envio segundo 0 tag.
-        */
+            indices[i] = aux2; // Actualizar el valor de indices en cada iteración
+        }
+
+        /*for(int j = 0; j < div; j++){
+            printf("%d ", indices[j]);
+        }*/
+
+        MPI_Send(indices,div,MPI_INT,0,0,MPI_COMM_WORLD);
     }
-
+        
     MPI_Finalize(); 
-
     return 0; 
 }
+

@@ -48,9 +48,11 @@ int main(int argc, char ** argv){
         int aux=0;
         for(int i=1; i<size;i++){
             MPI_Send(&A[aux][0],div*n,MPI_INT,i,0,MPI_COMM_WORLD);  
-            MPI_Send(&B, n*n, MPI_INT,i,0,MPI_COMM_WORLD);
+            //MPI_Send(&B, n*n, MPI_INT,i,0,MPI_COMM_WORLD);
             aux=aux+div;
         }
+
+        MPI_Bcast(B, n*n, MPI_INT, 0, MPI_COMM_WORLD);
 
         printf("RESULTADO\n");
         for(int i=1; i<size; i++){
@@ -92,7 +94,8 @@ int main(int argc, char ** argv){
         int C[div][n];
 
         MPI_Recv(Apart,div*n,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        MPI_Recv(B,n*n,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        //MPI_Recv(B,n*n,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Bcast(B, n*n, MPI_INT, 0, MPI_COMM_WORLD);
         //printf("rank %d , %d , %d\n", rank, Apart[0][0],Apart[div-1][0]);
         //printf("rank %d\n", rank);
     
