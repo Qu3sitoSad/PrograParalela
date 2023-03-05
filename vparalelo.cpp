@@ -3,10 +3,6 @@
 #include <random>
 #include <time.h>
 
-//u x v = (u2v3 - u3v2, u3v1 - u1v3, u1v2 - u2v1)
-//Donde u = (u1, u2, u3) y v = (v1, v2, v3)
-//Si u x v = (0, 0, 0) las rectas son paralelas
-
 int main(int argc, char ** argv){ 
     int rank; 
     int size; 
@@ -26,7 +22,7 @@ int main(int argc, char ** argv){
 
     for(int i=0; i<40; i++){
         for(int j=0; j<3; j++){
-            data[i][j]= rand() % 5+1; //randoms del 1 al 20
+            data[i][j]= rand() % 5+1;
         }
     }
 
@@ -65,7 +61,7 @@ int main(int argc, char ** argv){
             double a2= (double) data[i][1] / (double) c[0][1];
             double a3= (double) data[i][2] / (double) c[0][2];
             
-            //printf("%d, %f, %f, %f\n",i,a1,a2,a3);
+            //printf("%d, %f, %f, %f\n",i,a1,a2,a3); // a1==a2==a3?
 
             if(a1 == a2 & a1 == a3){
                 //printf("valor de c %d, %d, %d\n",c[0][0],c[0][1],c[0][2]);
@@ -99,9 +95,16 @@ int main(int argc, char ** argv){
         MPI_Recv(data,div*3,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Recv(&aux,1,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
+        
         int indice=0;
         int cont=0;
+
         for(int i = 0; i < div ; i++){
+
+            //metodo daya
+            //u x v = (u2v3 - u3v2, u3v1 - u1v3, u1v2 - u2v1)
+            //Donde u = (u1, u2, u3) y v = (v1, v2, v3)
+            //Si u x v = (0, 0, 0) las rectas son paralelas
 
             uv1 = data[i][1]*c[0][2] - data[i][2]*c[0][1];
             uv2 = data[i][2]*c[0][0] - data[i][0]*c[0][2];
@@ -111,6 +114,7 @@ int main(int argc, char ** argv){
                 //printf(" daya en la rank %d hay una recta paralela en la posición: %d \n",rank, i);
             }
 
+            //metodo mile 
             double a1= (double) data[i][0] / (double) c[0][0];
             double a2= (double) data[i][1] / (double) c[0][1];
             double a3= (double) data[i][2] / (double) c[0][2];
@@ -120,7 +124,6 @@ int main(int argc, char ** argv){
             //printf("aux.%d\n", aux);
             
             if(a1 == a2 & a1 == a3){
-                
                 //printf("valor de data %d, %d, %d\n",data[i][0],data[i][1],data[i][2]);
                 indice= aux+1+i;
                 //printf("en la rank %d hay una recta paralela en la posición: %d \n",rank, indice);
