@@ -9,6 +9,14 @@
 int main(int argc, char** argv) {
     
     int rank, size;
+    /*
+    std::vector<int> datos;
+    std::ifstream is("datos.txt");
+    std::string tmp;
+    while(std::getline(is,tmp)){
+         int valor = std::stoi(tmp);
+         datos.push_back(valor);
+    }*/
    
     srand(time(NULL));
     
@@ -25,7 +33,6 @@ int main(int argc, char** argv) {
             vectorA[i]= rand() % N+0;
         }
 
-        printf("vectorA:\n");
         for(int i=0; i<N;i++){
             printf("%d, ", vectorA[i]);
         }
@@ -38,11 +45,8 @@ int main(int argc, char** argv) {
 
         for(int i=1;i<size;i++){
             int respConteo[N];
-            int tiempo;
             MPI_Recv(respConteo,N,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            //MPI_Recv(tiempo,1,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-            //prinf("tiempo: ", tiempo);
+            //MPI_Recv(tiempo,N,MPI_INT,i,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         }
 
         //rank0
@@ -57,50 +61,45 @@ int main(int argc, char** argv) {
             respConteo[i]=cont++;
         }
 
-        for(int i=0;i<100;i++){
-            printf("val: %d, #r: %d\n", i, respConteo[i]);
+        int total[N];
+        double t_total[N];
+        for(int i=0; i<N; i++){
+            total[N] += respConteo[i];
+            t_total[N] += tiempoT[i];
         }
 
-        int ContTotal[N];
-        for(int i=0;i<size;i++){
-            for(int j=0; j<N;j++){
-                ContTotal[j] += respConteo[j]; 
-            }
+        for(int i=0; i<N; i++){
+            printf("%d |%d |%lf \n",i, total[i], t_total[i]); 
         }
-        
-        for(int j=0; j<100;j++){
-            printf("%d , %d\n",j, ContTotal[j]);
-        }
-        
-
+                    
     }else{
 
         MPI_Recv(vectorA,datapart,MPI_INT,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
         int respConteo[100];
+        double tiempoT[100];
         int cont=0;
 
-        //auto start = std::chrono::high_resolution_clock::now();
-        for(int i=0; i<datapart;i++){   
+        for(int i=0; i<N; i++){   
+            auto start = std::chrono::high_resolution_clock::now();
             int cont=0;
-            for(int j=0 ; j<=100; j++){
+            for(int j=0; j<=100; j++){
                 if (vectorA[i]==j){  
                     cont++;
                 }
             }
             respConteo[i]=cont++;
+            auto end = std::chrono::high_resolution_clock::now();
+            std::chrono::duration<double> tiempo = end - start;
+            tiempoT[i] = tiempo.count()*0.001;        
         }
-        //auto end = std::chrono::high_resolution_clock::now();
-
-        //std::chrono::duration<double> tiempo = end - start;
-
-        for(int i=0;i<N;i++){
-            printf("val: %d, #r: %d\n", i, respConteo[i]);
-        }
-
-        MPI_Send(respConteo,100,MPI_INT,0,0,MPI_COMM_WORLD);
-        //MPI_Send(&tiempo,1,MPI_DOUBLE,0,0,MPI_COMM_WORLD);
-
+                
+        //int total[N];
+        //int t_total[N];
+        //MPI_Reduce(respConteo,total,100, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        //MPI_Reduce(tiempoT,t_total,100, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Send(respConteo,N,MPI_INT,0,0,MPI_COMM_WORLD);
+        MPI_Send(tiempoT,N,MPI_DOUBLE,0,0,MPI_COMM_WORLD);
     }
     MPI_Finalize();
     return 0;
